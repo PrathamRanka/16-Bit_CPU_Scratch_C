@@ -3,8 +3,8 @@ How I am Approaching towards it
 The Office Analogy
 Imagine a single office worker sitting at a desk. This worker is our CPU. Everything about a CPU maps perfectly to this worker's office:
 
-![rough-diagram](image.png)
-![alt text](image-1.png)
+![rough-diagram](public/image.png)
+![alt text](public/image-1.png)
 
 The worker can only do math on numbers that are on the desk (in registers). To work with something from the filing cabinet (memory), you first have to walk over, grab the folder, and bring it to your desk. This is why registers exist. They're the fast workspace.
 
@@ -42,7 +42,7 @@ That’s it. That’s a CPU. This loop of fetch, decode, and execute is the hear
 
 Blueprint : CPU Architecture
 Blueprint I can think off 
-![alt text](image-2.png)
+![alt text](public/image-2.png)
 
 
 The Status Board (Flags)
