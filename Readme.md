@@ -37,3 +37,30 @@ That’s it. That’s a CPU. This loop of fetch, decode, and execute is the hear
 
 
     The worker stops only when a task says “Go home.” That is our HALT instruction.
+
+---
+
+Blueprint : CPU Architecture
+Blueprint I can think off 
+![alt text](image-2.png)
+
+
+The Status Board (Flags)
+On the wall next to the desk, there's a board with three indicator lights. Every time the worker uses the calculator, these lights update automatically:
+Z (Zero): Lights up when the calculator's answer is exactly 0. It is used for equality checks
+N (Negative): Lights up when the answer is negative (bit 15 is set in two's complement)
+O (Overflow): Lights up when the numbers were too big and “wrapped around”
+These status lights are how the worker makes decisions. More on that when we get to conditional jumps.
+
+
+---
+
+
+The Inbox Tray (Stack)
+In the corner of the desk sits a spring-loaded tray called the inbox tray. The worker can:
+Push a sticky note onto the tray (the tray sinks down one slot)
+Pop the top note off (the tray springs up one slot)
+This is a stack: last in, first out (LIFO). It's critical for two things:
+Saving and restoring sticky note values temporarily
+Remembering where you were when the boss says “go do this other thing and come back” (function calls)
+The tray starts at the top (SP = 0xFFFF) and grows downward. Each push decreases the position, each pop increases it. This convention matches real x86 CPUs.
