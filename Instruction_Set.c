@@ -27,6 +27,9 @@ typedef enum {
     OP_STR  = 0x11,  // Store sticky note into filing cabinet folder
     OP_PUSH = 0x12,  // Push onto inbox tray
     OP_POP  = 0x13,  // Pop from inbox tray
+    OP_CALL = 0x14,  // Bookmark and jump to subroutine (2-word)
+    OP_RET  = 0x15,  // Return from subroutine (pop bookmark)
+    OP_HALT = 0x16,  // Go home (stop CPU)
 } Opcode;
 
 #endif
