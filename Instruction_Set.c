@@ -19,6 +19,14 @@ typedef enum {
     OP_SHL  = 0x09,  // Shift bits left
     OP_SHR  = 0x0A,  // Shift bits right
     OP_CMP  = 0x0B,  // Compare (subtract but only update status board)
+    OP_JMP  = 0x0C,  // Jump to task #N
+    OP_JZ   = 0x0D,  // Jump IF Zero light is on
+    OP_JNZ  = 0x0E,  // Jump IF Zero light is off
+    OP_JN   = 0x0F,  // Jump IF Negative light is on
+    OP_LDR  = 0x10,  // Load from filing cabinet folder into sticky note
+    OP_STR  = 0x11,  // Store sticky note into filing cabinet folder
+    OP_PUSH = 0x12,  // Push onto inbox tray
+    OP_POP  = 0x13,  // Pop from inbox tray
 } Opcode;
 
 #endif
