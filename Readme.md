@@ -74,3 +74,36 @@ This structure is a **stack** (Last In, First Out). Its used for:
 
 The stack pointer (SP) starts at 0xFFFF and moves downward on each push, upward on each pop, matching the convention used by real x86 processors.
 
+---
+
+## Writing Tasks on the Checklist (Instruction Encoding)
+
+Each task on the worker's checklist is a 16-bit number. We have to squeeze the task type, which sticky notes to use, and any extra info into those 16 bits.
+
+  ## The Encoding Formats
+
+  With 23 task types, we need a 5-bit opcode (supports up to 32 types). That leaves 11 bits for everything else. We use three formats:
+  Format R: Register operations (ADD, SUB, MOV, etc.)
+┌───────────┬──────────┬──────────┬──────────────┐
+│ TASK TYPE │ NOTE #1  │ NOTE #2  │ EXTRA        │
+│ (5 bits)  │ (3 bits) │ (3 bits) │ (5 bits)     │
+│ Opcode    │ dst reg  │ src reg  │ imm5 (0–31)  │
+└───────────┴──────────┴──────────┴──────────────┘
+  Bits 15-11   Bits 10-8   Bits 7-5    Bits 4-0
+  Format J: Jump operations (JMP, JZ, JNZ, JN):
+markdown
+┌───────────┬────────────────────────────────────┐
+│ TASK TYPE │ JUMP TARGET ADDRESS                │
+│ (5 bits)  │ (11 bits, range 0–2047)            │
+└───────────┴────────────────────────────────────┘
+  Bits 15-11              Bits 10-0
+Format W: Wide immediate (LOAD, CALL) uses two words:
+markdown
+Word 1: ┌──────────┬──────────┬──────────────────┐
+        │ OPCODE   │ DST REG  │ (unused)         │
+        │ (5 bits) │ (3 bits) │ (8 bits)         │
+        └──────────┴──────────┴──────────────────┘
+
+Word 2: ┌────────────────────────────────────────┐
+        │ FULL 16-BIT VALUE (0–65535)            │
+        └────────────────────────────────────────┘
