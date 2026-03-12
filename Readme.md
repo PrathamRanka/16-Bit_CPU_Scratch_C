@@ -107,3 +107,14 @@ Word 1: ┌──────────┬──────────┬─
 Word 2: ┌────────────────────────────────────────┐
         │ FULL 16-BIT VALUE (0–65535)            │
         └────────────────────────────────────────┘
+
+
+Example: “ADD sticky note #2 and sticky note #5”
+markdown
+OPCODE = ADD  = 00011   (task type 3)
+DST    = R2   = 010     (destination)
+SRC    = R5   = 101     (source)
+IMM5   = 0    = 00000
+
+Combined: 00011 010 101 00000 = 0x1AA0
+
