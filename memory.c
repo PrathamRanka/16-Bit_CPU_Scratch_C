@@ -14,4 +14,7 @@ uint16_t mem_read16(CPU *cpu, uint16_t address) {
     uint16_t low  = cpu->memory[address];
     uint16_t high = cpu->memory[address + 1];
     return (high << 8) | low;
-} 
+} void mem_write16(CPU *cpu, uint16_t address, uint16_t value) {
+    cpu->memory[address]     = value & 0xFF;
+    cpu->memory[address + 1] = (value >> 8) & 0xFF;
+}
