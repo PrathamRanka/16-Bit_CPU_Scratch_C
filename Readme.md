@@ -1,120 +1,167 @@
-﻿# 16-Bit CPU Scratch in C
+﻿# 16-Bit CPU (From Scratch in C)
 
-This document explains how the CPU emulator works using a simple office analogy. The goal is to keep the language clear and easy to understand.
-
----
+This project explains a simple 16-bit CPU emulator using an office analogy.
+The goal is to make core CPU ideas easy to understand while still being technically accurate.
 
 ## Office Analogy
-Think of one office worker at a desk. That worker is the CPU. Everything about the CPU maps to this office.
 
-![rough-diagram](public/image.png)  
-![alt text](public/image-1.png)
+Imagine one office worker at a desk. That worker is the CPU.
 
-- The worker can only calculate with papers that are already on the desk. These papers are the **registers**.
-- If the worker needs data from the filing cabinet (the **memory**), they must walk over, fetch the folder, and bring it back. Registers are the fast workspace to avoid that trip.
+![Office Sketch 1](public/image.png)
+![Office Sketch 2](public/image-1.png)
 
----
+- Papers on the desk are **registers** (fast, immediate workspace).
+- The filing cabinet is **memory** (larger, but slower to access).
+- The worker prefers desk papers first because they are faster than walking to the cabinet.
 
-## What Does the Worker Do?
-The worker repeats four simple steps over and over:
+## The CPU Cycle (Fetch → Decode → Execute → Advance)
 
-1. **Fetch**: Read the next instruction from the checklist.
-2. **Decode**: Figure out what the instruction means (e.g. "add sticky note 0 and sticky note 1").
-3. **Execute**: Do the work, using a calculator if needed.
-4. **Advance**: Move to the next item on the checklist (increment the program counter).
+The worker repeats the same 4-step loop:
+
+1. **Fetch**: Read the next instruction.
+2. **Decode**: Interpret what the instruction means.
+3. **Execute**: Perform the operation.
+4. **Advance**: Move to the next instruction (increment the program counter).
 
 ```text
+WORKER'S DAILY ROUTINE
 
-  WORKER'S DAILY ROUTINE                      
-                                              
-  1. Read next task from checklist  [FETCH]   
-                                             
-  2. Understand what it says        [DECODE]  
-                                             
-  3. Do the work                    [EXECUTE] 
-                                             
-  4. Cross it off, move to next     [ADVANCE] 
-                                             
-               repeat until "GO HOME" 
+1) Read next task      [FETCH]
+2) Understand task     [DECODE]
+3) Perform task        [EXECUTE]
+4) Move to next task   [ADVANCE]
 
+Repeat until "GO HOME" (HALT)
 ```
 
-The loop continues until an instruction tells the worker to "go home"; this is the **HALT** instruction.
-
----
+Execution stops when the CPU encounters the **HALT** instruction.
 
 ## CPU Blueprint
-Here is a rough diagram of the CPU architecture:
 
-![alt text](public/image-2.png)
+High-level architecture diagram:
 
----
+![CPU Blueprint](public/image-2.png)
 
-## Status Board (Flags)
-A small board on the wall shows three lights. After each calculation, the lights update:
+## Flags (Status Board)
 
-- **Z (Zero)**: lit when the result is 0. Used for checks like "is equal?".
-- **N (Negative)**: lit when the result is negative (bit 15 set in twos complement).
-- **O (Overflow)**: lit when the result wrapped around because it was too large.
+After arithmetic/logic operations, status flags are updated:
 
-These flags help the worker make decisions, especially for conditional jumps.
+- **Z (Zero)**: set when result is `0`.
+- **N (Negative)**: set when result is negative (bit 15 set in two's complement).
+- **O (Overflow)**: set when signed arithmetic overflows.
 
----
+These flags are mainly used by conditional jump instructions.
 
-## Inbox Tray (Stack)
-A spring-loaded tray on the desk holds sticky notes. It works like this:
+## Stack (Inbox Tray)
 
-- **Push** a note: the tray moves down one slot.
-- **Pop** a note: the tray springs up one slot.
+The stack is a Last-In, First-Out (LIFO) structure:
 
-This structure is a **stack** (Last In, First Out). Its used for:
+- **Push**: add value, stack grows downward.
+- **Pop**: remove value, stack moves upward.
 
-1. Saving temporary values.
-2. Remembering where to return after a sub-task (function calls).
+Typical uses:
 
-The stack pointer (SP) starts at 0xFFFF and moves downward on each push, upward on each pop, matching the convention used by real x86 processors.
+1. Save temporary values.
+2. Store return addresses for function calls.
 
----
+The stack pointer (**SP**) starts at `0xFFFF`, decreases on push, and increases on pop.
 
-## Writing Tasks on the Checklist (Instruction Encoding)
+## Instruction Encoding (16-bit)
 
-Each task on the worker's checklist is a 16-bit number. We have to squeeze the task type, which sticky notes to use, and any extra info into those 16 bits.
+Each instruction is encoded into 16 bits.
 
-  ## The Encoding Formats
+With 23 instruction types, the opcode uses **5 bits** (up to 32 possible opcodes).
+That leaves **11 bits** for operands or immediate data, depending on instruction format.
 
-  With 23 task types, we need a 5-bit opcode (supports up to 32 types). That leaves 11 bits for everything else. We use three formats:
-  Format R: Register operations (ADD, SUB, MOV, etc.)
+### Format R (Register-type)
+
+Used by register operations such as `ADD`, `SUB`, `MOV`.
+
+```text
 ┌───────────┬──────────┬──────────┬──────────────┐
-│ TASK TYPE │ NOTE #1  │ NOTE #2  │ EXTRA        │
+│ OPCODE    │ DST REG  │ SRC REG  │ IMM5         │
 │ (5 bits)  │ (3 bits) │ (3 bits) │ (5 bits)     │
-│ Opcode    │ dst reg  │ src reg  │ imm5 (0–31)  │
 └───────────┴──────────┴──────────┴──────────────┘
-  Bits 15-11   Bits 10-8   Bits 7-5    Bits 4-0
-  Format J: Jump operations (JMP, JZ, JNZ, JN):
-markdown
+ Bits 15-11   Bits 10-8   Bits 7-5    Bits 4-0
+```
+
+### Format J (Jump-type)
+
+Used by jump operations such as `JMP`, `JZ`, `JNZ`, `JN`.
+
+```text
 ┌───────────┬────────────────────────────────────┐
-│ TASK TYPE │ JUMP TARGET ADDRESS                │
-│ (5 bits)  │ (11 bits, range 0–2047)            │
+│ OPCODE    │ JUMP TARGET ADDRESS                │
+│ (5 bits)  │ (11 bits, range 0-2047)            │
 └───────────┴────────────────────────────────────┘
-  Bits 15-11              Bits 10-0
-Format W: Wide immediate (LOAD, CALL) uses two words:
-markdown
-Word 1: ┌──────────┬──────────┬──────────────────┐
-        │ OPCODE   │ DST REG  │ (unused)         │
-        │ (5 bits) │ (3 bits) │ (8 bits)         │
-        └──────────┴──────────┴──────────────────┘
+ Bits 15-11              Bits 10-0
+```
 
-Word 2: ┌────────────────────────────────────────┐
-        │ FULL 16-BIT VALUE (0–65535)            │
-        └────────────────────────────────────────┘
+### Format W (Wide Immediate, 2 Words)
 
+Used when a full 16-bit immediate value is needed (for example `LOAD`, `CALL`).
 
-Example: “ADD sticky note #2 and sticky note #5”
-markdown
-OPCODE = ADD  = 00011   (task type 3)
-DST    = R2   = 010     (destination)
-SRC    = R5   = 101     (source)
+```text
+Word 1:
+┌──────────┬──────────┬──────────────────┐
+│ OPCODE   │ DST REG  │ (unused)         │
+│ (5 bits) │ (3 bits) │ (8 bits)         │
+└──────────┴──────────┴──────────────────┘
+
+Word 2:
+┌────────────────────────────────────────┐
+│ FULL 16-BIT VALUE (0-65535)            │
+└────────────────────────────────────────┘
+```
+
+### Encoding Example
+
+Example: `ADD R2, R5`
+
+```text
+OPCODE = ADD  = 00011
+DST    = R2   = 010
+SRC    = R5   = 101
 IMM5   = 0    = 00000
 
 Combined: 00011 010 101 00000 = 0x1AA0
+```
 
+## Memory (The Filing Cabinet)
+
+The filing cabinet represents RAM.
+It contains **65,536 addresses** (`0x0000` to `0xFFFF`), and each address stores **1 byte** (8 bits).
+
+Because registers hold 16-bit values, saving one register to memory requires **2 consecutive bytes**.
+
+### Byte Order (Little-Endian)
+
+Example: store `0x1234` starting at address `0x0010`.
+
+```text
+Memory:
+  0x0010: 0x34  <- low byte
+  0x0011: 0x12  <- high byte
+```
+
+This layout is called **little-endian**: the low byte is written to the lower address first.
+
+### Code and Data Share Memory
+
+The same memory stores both:
+
+- **Program code** (instructions)
+- **Program data** (values read/written during execution)
+
+Typically, code starts at lower addresses, while runtime data is placed in other regions.
+Instructions like `STR` write data to memory, and `LDR` reads it back.
+
+### Reset State (Power-On)
+
+When the CPU resets:
+
+- Registers are cleared (`0x0000`).
+- Memory is cleared (`0x00`).
+- Program Counter (`PC`) starts at `0x0000`.
+- Stack Pointer (`SP`) starts at `0xFFFF`.
+- Flags (`Z`, `N`, `O`) are cleared.
